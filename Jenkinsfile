@@ -14,7 +14,7 @@ pipeline {
         GITHUB_TOKEN = credentials('githubrelease')
         AWSIP = 'ec2-18-197-145-81.eu-central-1.compute.amazonaws.com'
 
-        LIBRARY_NAME = 'libProcess'
+        LIBRARY_NAME = 'Process'
         REPOSITORY_OWNER = 'feenkcom'
         REPOSITORY_NAME = 'libprocess'
 
@@ -57,11 +57,11 @@ pipeline {
 
                     steps {
                         sh 'git clean -fdx'
-                        sh "cargo build --bin ${LIBRARY_NAME} --release"
+                        sh "cargo build --lib ${LIBRARY_NAME} --release"
 
-                        sh "mv target/release/${LIBRARY_NAME}.${EXTENSION} ${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
+                        sh "mv target/release/lib${LIBRARY_NAME}.${EXTENSION} lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
 
-                        stash includes: "${LIBRARY_NAME}-${TARGET}.${EXTENSION}", name: "${TARGET}"
+                        stash includes: "lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}", name: "${TARGET}"
                     }
                 }
                 stage ('MacOS M1') {
@@ -77,11 +77,11 @@ pipeline {
 
                     steps {
                         sh 'git clean -fdx'
-                        sh "cargo build --bin ${LIBRARY_NAME} --release"
+                        sh "cargo build --lib ${LIBRARY_NAME} --release"
 
-                        sh "mv target/release/${LIBRARY_NAME}.${EXTENSION} ${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
+                        sh "mv target/release/lib${LIBRARY_NAME}.${EXTENSION} lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
 
-                        stash includes: "${LIBRARY_NAME}-${TARGET}.${EXTENSION}", name: "${TARGET}"
+                        stash includes: "lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}", name: "${TARGET}"
                     }
                 }
 
@@ -97,11 +97,11 @@ pipeline {
 
                     steps {
                         sh 'git clean -fdx'
-                        sh "cargo build --bin ${LIBRARY_NAME} --release"
+                        sh "cargo build --lib ${LIBRARY_NAME} --release"
 
-                        sh "mv target/release/${LIBRARY_NAME}.${EXTENSION} ${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
+                        sh "mv target/release/lib${LIBRARY_NAME}.${EXTENSION} lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
 
-                        stash includes: "${LIBRARY_NAME}-${TARGET}.${EXTENSION}", name: "${TARGET}"
+                        stash includes: "lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}", name: "${TARGET}"
                     }
                 }
 
@@ -125,37 +125,11 @@ pipeline {
                     steps {
                         powershell 'git clean -fdx'
 
-                        powershell "cargo build --bin ${LIBRARY_NAME} --release"
+                        powershell "cargo build --lib ${LIBRARY_NAME} --release"
                         powershell "Move-Item -Path target/release/${LIBRARY_NAME}.${EXTENSION} -Destination ${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
                         stash includes: "${LIBRARY_NAME}-${TARGET}.${EXTENSION}", name: "${TARGET}"
                     }
                 }
-            }
-        }
-        stage ('Sign and Notarize Mac') {
-            agent {
-                label "${MACOS_M1_TARGET}"
-            }
-
-            environment {
-                TARGET = "${MACOS_M1_TARGET}"
-                PATH = "$HOME/.cargo/bin:/opt/homebrew/bin:$PATH"
-                CERT = credentials('devcertificate')
-                APPLEPASSWORD = credentials('notarizepassword')
-            }
-
-            steps {
-                sh 'git clean -fdx'
-                unstash "${MACOS_INTEL_TARGET}"
-                unstash "${MACOS_M1_TARGET}"
-                sh "curl -o feenk-signer -LsS  https://github.com/feenkcom/feenk-signer/releases/download/${FEENK_SIGNER_VERSION}/feenk-signer-${TARGET}"
-                sh "chmod +x feenk-signer"
-
-                sh "./feenk-signer ${LIBRARY_NAME}-${MACOS_INTEL_TARGET}"
-                sh "./feenk-signer ${LIBRARY_NAME}-${MACOS_M1_TARGET}"
-
-                stash includes: "${LIBRARY_NAME}-${MACOS_INTEL_TARGET}", name: "${MACOS_INTEL_TARGET}"
-                stash includes: "${LIBRARY_NAME}-${MACOS_M1_TARGET}", name: "${MACOS_M1_TARGET}"
             }
         }
         stage ('Deployment') {
@@ -187,9 +161,9 @@ pipeline {
                     --bump ${params.BUMP} \
                     --auto-accept \
                     --assets \
-                        ${LIBRARY_NAME}-${LINUX_AMD64_TARGET}.so \
-                        ${LIBRARY_NAME}-${MACOS_INTEL_TARGET}.dylib \
-                        ${LIBRARY_NAME}-${MACOS_M1_TARGET}.dylib \
+                        lib${LIBRARY_NAME}-${LINUX_AMD64_TARGET}.so \
+                        lib${LIBRARY_NAME}-${MACOS_INTEL_TARGET}.dylib \
+                        lib${LIBRARY_NAME}-${MACOS_M1_TARGET}.dylib \
                         ${LIBRARY_NAME}-${WINDOWS_AMD64_TARGET}.dll """
             }
         }
