@@ -1,5 +1,6 @@
 use boxer::{ValueBox, ValueBoxPointer, ValueBoxPointerReference};
 use std::process::{Child, ExitStatus, Output};
+use crate::async_buffer::AsynchronousBuffer;
 
 #[no_mangle]
 pub fn process_child_kill(child_ptr: *mut ValueBox<Child>) -> bool {
@@ -9,6 +10,26 @@ pub fn process_child_kill(child_ptr: *mut ValueBox<Child>) -> bool {
 #[no_mangle]
 pub fn process_child_id(child_ptr: *mut ValueBox<Child>) -> u32 {
     child_ptr.with_not_null_return(0, |child| child.id())
+}
+
+#[no_mangle]
+pub fn process_child_take_asynchronous_stdout(
+    child_ptr: *mut ValueBox<Child>,
+) -> *mut ValueBox<AsynchronousBuffer> {
+    child_ptr.with_not_null_return(std::ptr::null_mut(), |child| match child.stdout.take() {
+        None => std::ptr::null_mut(),
+        Some(stdout) => ValueBox::new(AsynchronousBuffer::new(stdout)).into_raw(),
+    })
+}
+
+#[no_mangle]
+pub fn process_child_take_asynchronous_stderr(
+    child_ptr: *mut ValueBox<Child>,
+) -> *mut ValueBox<AsynchronousBuffer> {
+    child_ptr.with_not_null_return(std::ptr::null_mut(), |child| match child.stderr.take() {
+        None => std::ptr::null_mut(),
+        Some(stderr) => ValueBox::new(AsynchronousBuffer::new(stderr)).into_raw(),
+    })
 }
 
 #[no_mangle]

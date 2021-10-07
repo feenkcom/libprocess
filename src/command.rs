@@ -1,7 +1,7 @@
 use boxer::string::BoxerString;
 use boxer::{ValueBox, ValueBoxPointer, ValueBoxPointerReference};
 use std::path::Path;
-use std::process::{Child, Command, Output};
+use std::process::{Child, Command, Output, Stdio};
 
 #[no_mangle]
 pub fn process_command_new(name_ptr: *mut ValueBox<BoxerString>) -> *mut ValueBox<Command> {
@@ -51,6 +51,33 @@ pub fn process_command_current_dir(
         dir_prt.with_not_null(|dir| {
             command.current_dir(Path::new(dir.as_str()));
         })
+    })
+}
+
+#[no_mangle]
+pub fn process_command_pipe_stdout(
+    command_ptr: *mut ValueBox<Command>
+) {
+    command_ptr.with_not_null(|command| {
+        command.stdout(Stdio::piped());
+    })
+}
+
+#[no_mangle]
+pub fn process_command_pipe_stderr(
+    command_ptr: *mut ValueBox<Command>
+) {
+    command_ptr.with_not_null(|command| {
+        command.stderr(Stdio::piped());
+    })
+}
+
+#[no_mangle]
+pub fn process_command_pipe_stdin(
+    command_ptr: *mut ValueBox<Command>
+) {
+    command_ptr.with_not_null(|command| {
+        command.stdin(Stdio::piped());
     })
 }
 
