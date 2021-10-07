@@ -57,7 +57,7 @@ pipeline {
 
                     steps {
                         sh 'git clean -fdx'
-                        sh "cargo build --lib ${LIBRARY_NAME} --release"
+                        sh "cargo build --lib --release"
 
                         sh "mv target/release/lib${LIBRARY_NAME}.${EXTENSION} lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
 
@@ -77,7 +77,7 @@ pipeline {
 
                     steps {
                         sh 'git clean -fdx'
-                        sh "cargo build --lib ${LIBRARY_NAME} --release"
+                        sh "cargo build --lib --release"
 
                         sh "mv target/release/lib${LIBRARY_NAME}.${EXTENSION} lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
 
@@ -97,7 +97,7 @@ pipeline {
 
                     steps {
                         sh 'git clean -fdx'
-                        sh "cargo build --lib ${LIBRARY_NAME} --release"
+                        sh "cargo build --lib --release"
 
                         sh "mv target/release/lib${LIBRARY_NAME}.${EXTENSION} lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
 
@@ -125,7 +125,7 @@ pipeline {
                     steps {
                         powershell 'git clean -fdx'
 
-                        powershell "cargo build --lib ${LIBRARY_NAME} --release"
+                        powershell "cargo build --lib --release"
                         powershell "Move-Item -Path target/release/${LIBRARY_NAME}.${EXTENSION} -Destination ${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
                         stash includes: "${LIBRARY_NAME}-${TARGET}.${EXTENSION}", name: "${TARGET}"
                     }
