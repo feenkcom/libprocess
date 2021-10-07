@@ -1,7 +1,7 @@
 use boxer::string::BoxerString;
 use boxer::{ValueBox, ValueBoxPointer, ValueBoxPointerReference};
 use std::path::Path;
-use std::process::{Child, Command};
+use std::process::{Child, Command, Output};
 
 #[no_mangle]
 pub fn process_command_new(name_ptr: *mut ValueBox<BoxerString>) -> *mut ValueBox<Command> {
@@ -59,6 +59,15 @@ pub fn process_command_spawn(command_ptr: *mut ValueBox<Command>) -> *mut ValueB
     command_ptr.with_not_null_return(std::ptr::null_mut(), |command| {
         command.spawn().map_or(std::ptr::null_mut(), |child| {
             ValueBox::new(child).into_raw()
+        })
+    })
+}
+
+#[no_mangle]
+pub fn process_command_output(command_ptr: *mut ValueBox<Command>) -> *mut ValueBox<Output> {
+    command_ptr.with_not_null_return(std::ptr::null_mut(), |command| {
+        command.output().map_or(std::ptr::null_mut(), |output| {
+            ValueBox::new(output).into_raw()
         })
     })
 }
