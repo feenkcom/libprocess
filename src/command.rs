@@ -55,29 +55,44 @@ pub fn process_command_current_dir(
 }
 
 #[no_mangle]
-pub fn process_command_pipe_stdout(
-    command_ptr: *mut ValueBox<Command>
-) {
+pub fn process_command_pipe_stdout(command_ptr: *mut ValueBox<Command>) {
     command_ptr.with_not_null(|command| {
         command.stdout(Stdio::piped());
     })
 }
 
 #[no_mangle]
-pub fn process_command_pipe_stderr(
-    command_ptr: *mut ValueBox<Command>
-) {
+pub fn process_command_pipe_stderr(command_ptr: *mut ValueBox<Command>) {
     command_ptr.with_not_null(|command| {
         command.stderr(Stdio::piped());
     })
 }
 
 #[no_mangle]
-pub fn process_command_pipe_stdin(
-    command_ptr: *mut ValueBox<Command>
-) {
+pub fn process_command_pipe_stdin(command_ptr: *mut ValueBox<Command>) {
     command_ptr.with_not_null(|command| {
         command.stdin(Stdio::piped());
+    })
+}
+
+#[no_mangle]
+pub fn process_command_inherit_stdout(command_ptr: *mut ValueBox<Command>) {
+    command_ptr.with_not_null(|command| {
+        command.stdout(Stdio::inherit());
+    })
+}
+
+#[no_mangle]
+pub fn process_command_inherit_stderr(command_ptr: *mut ValueBox<Command>) {
+    command_ptr.with_not_null(|command| {
+        command.stderr(Stdio::inherit());
+    })
+}
+
+#[no_mangle]
+pub fn process_command_inherit_stdin(command_ptr: *mut ValueBox<Command>) {
+    command_ptr.with_not_null(|command| {
+        command.stdin(Stdio::inherit());
     })
 }
 

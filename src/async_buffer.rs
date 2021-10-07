@@ -1,10 +1,10 @@
-use std::sync::{Mutex, Arc};
-use std::thread;
-use std::io::Read;
-use boxer::{ValueBox, ValueBoxPointer, ValueBoxPointerReference};
-use boxer::string::BoxerString;
-use encoding_rs::{UTF_8, CoderResult};
 use boxer::array::BoxerArrayU8;
+use boxer::string::BoxerString;
+use boxer::{ValueBox, ValueBoxPointer, ValueBoxPointerReference};
+use encoding_rs::{CoderResult, UTF_8};
+use std::io::Read;
+use std::sync::{Arc, Mutex};
+use std::thread;
 
 pub struct AsynchronousBuffer {
     buffer: Arc<Mutex<Vec<u8>>>,
@@ -12,8 +12,8 @@ pub struct AsynchronousBuffer {
 
 impl AsynchronousBuffer {
     pub fn new<R>(mut stream: R) -> Self
-        where
-            R: Read + Send + 'static,
+    where
+        R: Read + Send + 'static,
     {
         let buffer = Arc::new(Mutex::new(Vec::new()));
         let vec = buffer.clone();
@@ -58,7 +58,8 @@ impl AsynchronousBuffer {
                 let mut string = String::with_capacity(buffer.len());
 
                 let mut decoder = UTF_8.new_decoder();
-                let (result, length, _has_replacements) = decoder.decode_to_string(buffer.as_slice(), &mut string, false);
+                let (result, length, _has_replacements) =
+                    decoder.decode_to_string(buffer.as_slice(), &mut string, false);
 
                 buffer.drain(0..length);
 
@@ -68,7 +69,7 @@ impl AsynchronousBuffer {
                 }
 
                 string
-            },
+            }
             Err(error) => {
                 error!("[{}] Failed to lock the buffer due to {:?}", line!(), error);
                 "".to_string()
@@ -94,7 +95,6 @@ pub fn process_async_buffer_poll_string(
         ValueBox::new(BoxerString::from_string(buffer.poll_string())).into_raw()
     })
 }
-
 
 #[no_mangle]
 pub fn process_async_buffer_drop(ptr: &mut *mut ValueBox<AsynchronousBuffer>) {

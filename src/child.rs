@@ -1,6 +1,6 @@
+use crate::async_buffer::AsynchronousBuffer;
 use boxer::{ValueBox, ValueBoxPointer, ValueBoxPointerReference};
 use std::process::{Child, ExitStatus, Output};
-use crate::async_buffer::AsynchronousBuffer;
 
 #[no_mangle]
 pub fn process_child_kill(child_ptr: *mut ValueBox<Child>) -> bool {
@@ -10,6 +10,14 @@ pub fn process_child_kill(child_ptr: *mut ValueBox<Child>) -> bool {
 #[no_mangle]
 pub fn process_child_id(child_ptr: *mut ValueBox<Child>) -> u32 {
     child_ptr.with_not_null_return(0, |child| child.id())
+}
+
+#[no_mangle]
+pub fn process_child_is_terminated(child_ptr: *mut ValueBox<Child>) -> bool {
+    child_ptr.with_not_null_return(true, |child| match child.try_wait() {
+        Ok(status) => status.is_some(),
+        Err(_) => true,
+    })
 }
 
 #[no_mangle]
