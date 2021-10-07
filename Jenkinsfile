@@ -112,7 +112,7 @@ pipeline {
 
                     environment {
                         TARGET = "${WINDOWS_AMD64_TARGET}"
-                        EXTENSION = "so"
+                        EXTENSION = "dll"
                         LLVM_HOME = 'C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Tools\\Llvm\\x64'
                         LIBCLANG_PATH = "${LLVM_HOME}\\bin"
                         CMAKE_PATH = 'C:\\Program Files\\CMake\\bin'
