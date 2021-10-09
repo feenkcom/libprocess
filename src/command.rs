@@ -138,19 +138,3 @@ pub fn process_windows_creation_flags(command_ptr: *mut ValueBox<Command>, flags
 pub fn process_windows_creation_flags(_command_ptr: *mut ValueBox<Command>, _flags: u32) {
     warn!("[{}] tried to set Windows-specific process creation flags on {}", line!(), std::env::consts::OS);
 }
-
-#[no_mangle]
-#[cfg(target_os = "windows")]
-pub fn process_windows_force_quotes(command_ptr: *mut ValueBox<Command>, enabled: bool) {
-    use std::os::windows::process::CommandExt;
-
-    command_ptr.with_not_null(|command| {
-        command.force_quotes(enabled);
-    });
-}
-
-#[no_mangle]
-#[cfg(not(target_os = "windows"))]
-pub fn process_windows_force_quotes(_command_ptr: *mut ValueBox<Command>, _enabled: bool) {
-    warn!("[{}] tried to set Windows-specific force-quotes process property on {}", line!(), std::env::consts::OS);
-}
