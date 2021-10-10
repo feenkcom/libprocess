@@ -1,0 +1,11 @@
+[package]
+name = "libprocess-builder"
+version = "0.1.0"
+edition = "2018"
+
+[[bin]]
+name = "builder"
+path = "src/main.rs"
+
+[dependencies]
+shared-library-builder = { path = "../../shared-library-builder-rs" }
