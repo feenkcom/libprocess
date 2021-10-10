@@ -57,9 +57,9 @@ pipeline {
 
                     steps {
                         sh 'git clean -fdx'
-                        sh "cargo build --lib --release"
+                        sh "run --bin builder --release"
 
-                        sh "mv target/release/lib${LIBRARY_NAME}.${EXTENSION} lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
+                        sh "mv target/${TARGET}/release/lib${LIBRARY_NAME}.${EXTENSION} lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
 
                         stash includes: "lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}", name: "${TARGET}"
                     }
@@ -77,9 +77,9 @@ pipeline {
 
                     steps {
                         sh 'git clean -fdx'
-                        sh "cargo build --lib --release"
+                        sh "run --bin builder --release"
 
-                        sh "mv target/release/lib${LIBRARY_NAME}.${EXTENSION} lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
+                        sh "mv target/${TARGET}/release/lib${LIBRARY_NAME}.${EXTENSION} lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
 
                         stash includes: "lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}", name: "${TARGET}"
                     }
@@ -97,9 +97,9 @@ pipeline {
 
                     steps {
                         sh 'git clean -fdx'
-                        sh "cargo build --lib --release"
+                        sh "run --bin builder --release"
 
-                        sh "mv target/release/lib${LIBRARY_NAME}.${EXTENSION} lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
+                        sh "mv target/${TARGET}/release/lib${LIBRARY_NAME}.${EXTENSION} lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
 
                         stash includes: "lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}", name: "${TARGET}"
                     }
@@ -125,8 +125,8 @@ pipeline {
                     steps {
                         powershell 'git clean -fdx'
 
-                        powershell "cargo build --lib --release"
-                        powershell "Move-Item -Path target/release/${LIBRARY_NAME}.${EXTENSION} -Destination ${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
+                        powershell "run --bin builder --release"
+                        powershell "Move-Item -Path target/${TARGET}/release/${LIBRARY_NAME}.${EXTENSION} -Destination ${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
                         stash includes: "${LIBRARY_NAME}-${TARGET}.${EXTENSION}", name: "${TARGET}"
                     }
                 }

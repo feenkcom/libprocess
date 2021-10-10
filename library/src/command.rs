@@ -55,9 +55,7 @@ pub fn process_command_env_remove(
 }
 
 #[no_mangle]
-pub fn process_command_env_clear(
-    command_ptr: *mut ValueBox<Command>,
-) {
+pub fn process_command_env_clear(command_ptr: *mut ValueBox<Command>) {
     command_ptr.with_not_null(|command| {
         command.env_clear();
     })
