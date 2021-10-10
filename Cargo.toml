@@ -2,8 +2,8 @@
 
 members = [
     "library",
-    "builder/library",
-    "builder/builder",
+    "shared-library-builder/library",
+    "shared-library-builder/builder",
 ]
 
 exclude = [ "target" ]
