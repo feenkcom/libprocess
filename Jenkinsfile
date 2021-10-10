@@ -12,7 +12,6 @@ pipeline {
     }
     environment {
         GITHUB_TOKEN = credentials('githubrelease')
-        AWSIP = 'ec2-18-197-145-81.eu-central-1.compute.amazonaws.com'
 
         LIBRARY_NAME = 'Process'
         REPOSITORY_OWNER = 'feenkcom'
