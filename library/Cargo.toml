@@ -10,7 +10,7 @@ name = "Process"
 crate-type = ["cdylib"]
 
 [dependencies]
-libc = "0.2.101"
+libc = "0.2"
 boxer = { git = "https://github.com/feenkcom/gtoolkit-boxer", rev = "8ffd345b6aabda55c5ab1b4914f6f3e5f92918d4" }
 log = "0.4"
 env_logger = "0.7"

@@ -5,5 +5,5 @@ pub fn libprocess(version: impl Into<String>) -> RustLibrary {
         "Process",
         LibraryLocation::Git(GitLocation::github("feenkcom", "libprocess").tag(version)),
     )
-        .package("libprocess")
+    .package("libprocess")
 }

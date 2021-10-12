@@ -8,7 +8,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         "Process",
         LibraryLocation::Path(PathLocation::new(std::env::current_dir().unwrap())),
     )
-        .package("libprocess");
+    .package("libprocess");
 
     let context = LibraryCompilationContext::new(
         "target",

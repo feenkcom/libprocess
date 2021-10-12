@@ -4,7 +4,51 @@ use std::process::{Child, ExitStatus, Output};
 
 #[no_mangle]
 pub fn process_child_kill(child_ptr: *mut ValueBox<Child>) -> bool {
-    child_ptr.with_not_null_return(false, |child| child.kill().map_or(false, |_| true))
+    child_ptr.with_not_null_return(false, |child| child.kill().is_ok())
+}
+
+#[no_mangle]
+pub fn process_child_kill_with_signal(
+    child_ptr: *mut ValueBox<Child>,
+    signal: libc::c_int,
+) -> bool {
+    child_ptr.with_not_null_return(false, |child| {
+        #[cfg(target_os = "windows")]
+        {
+            child.kill().is_ok()
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            let can_kill = match child.try_wait() {
+                Ok(status) => status.is_none(),
+                Err(error) => {
+                    error!("[{}] Failed to get the exit status of a process with id {} due to {:?}. We will try to kill it anyway", line!(), child.id(), error);
+                    true
+                },
+            };
+
+            if can_kill {
+                let kill_result = unsafe { libc::kill(child.id() as libc::pid_t, signal) };
+
+                let result = (if kill_result == -1 {
+                    Err(std::io::Error::last_os_error())
+                } else {
+                    Ok(kill_result)
+                }).map(drop);
+
+                match result {
+                    Ok(_) => { true }
+                    Err(error) => {
+                        error!("[{}] Failed to kill a process with id {} due to {:?}. We will try to kill it anyway", line!(), child.id(), error);
+                        false
+                    }
+                }
+
+            } else {
+                false
+            }
+        }
+    })
 }
 
 #[no_mangle]
