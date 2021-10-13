@@ -86,23 +86,35 @@ pub fn process_child_take_asynchronous_stderr(
 
 #[no_mangle]
 pub fn process_child_wait(child_ptr: *mut ValueBox<Child>) -> *mut ValueBox<ExitStatus> {
-    child_ptr.with_not_null_return(std::ptr::null_mut(), |child| {
-        child.wait().map_or(std::ptr::null_mut(), |exit_status| {
-            ValueBox::new(exit_status).into_raw()
-        })
+    child_ptr.with_not_null_return(std::ptr::null_mut(), |child| match child.wait() {
+        Ok(exit_status) => ValueBox::new(exit_status).into_raw(),
+        Err(error) => {
+            error!(
+                "[{}] Failed to wait for an exit status from a child {:?} due to {:?}",
+                line!(),
+                child,
+                error
+            );
+            std::ptr::null_mut()
+        }
     })
 }
 
 #[no_mangle]
 pub fn process_child_try_wait(child_ptr: *mut ValueBox<Child>) -> *mut ValueBox<ExitStatus> {
-    child_ptr.with_not_null_return(std::ptr::null_mut(), |child| {
-        child
-            .try_wait()
-            .map_or(std::ptr::null_mut(), |exit_status| {
-                exit_status.map_or(std::ptr::null_mut(), |exit_status| {
-                    ValueBox::new(exit_status).into_raw()
-                })
-            })
+    child_ptr.with_not_null_return(std::ptr::null_mut(), |child| match child.try_wait() {
+        Ok(exit_status) => exit_status.map_or(std::ptr::null_mut(), |exit_status| {
+            ValueBox::new(exit_status).into_raw()
+        }),
+        Err(error) => {
+            error!(
+                "[{}] Failed to query an exit status of a child process {:?} due to {:?}",
+                line!(),
+                child,
+                error
+            );
+            std::ptr::null_mut()
+        }
     })
 }
 
@@ -112,11 +124,17 @@ pub fn process_child_wait_with_output(
     mut child_ptr: *mut ValueBox<Child>,
 ) -> *mut ValueBox<Output> {
     child_ptr.with_not_null_value_consumed_return(std::ptr::null_mut(), |child| {
-        child
-            .wait_with_output()
-            .map_or(std::ptr::null_mut(), |output| {
-                ValueBox::new(output).into_raw()
-            })
+        match child.wait_with_output() {
+            Ok(exit_status) => ValueBox::new(exit_status).into_raw(),
+            Err(error) => {
+                error!(
+                    "[{}] Failed to wait for an output from a child process due to {:?}",
+                    line!(),
+                    error
+                );
+                std::ptr::null_mut()
+            }
+        }
     })
 }
 

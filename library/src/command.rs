@@ -117,28 +117,49 @@ pub fn process_command_inherit_stdin(command_ptr: *mut ValueBox<Command>) {
 
 #[no_mangle]
 pub fn process_command_spawn(command_ptr: *mut ValueBox<Command>) -> *mut ValueBox<Child> {
-    command_ptr.with_not_null_return(std::ptr::null_mut(), |command| {
-        command.spawn().map_or(std::ptr::null_mut(), |child| {
-            ValueBox::new(child).into_raw()
-        })
+    command_ptr.with_not_null_return(std::ptr::null_mut(), |command| match command.spawn() {
+        Ok(child) => ValueBox::new(child).into_raw(),
+        Err(error) => {
+            error!(
+                "[{}] Failed to spawn a child process for {:?} due to {:?}",
+                line!(),
+                command,
+                error
+            );
+            std::ptr::null_mut()
+        }
     })
 }
 
 #[no_mangle]
 pub fn process_command_output(command_ptr: *mut ValueBox<Command>) -> *mut ValueBox<Output> {
-    command_ptr.with_not_null_return(std::ptr::null_mut(), |command| {
-        command.output().map_or(std::ptr::null_mut(), |output| {
-            ValueBox::new(output).into_raw()
-        })
+    command_ptr.with_not_null_return(std::ptr::null_mut(), |command| match command.output() {
+        Ok(output) => ValueBox::new(output).into_raw(),
+        Err(error) => {
+            error!(
+                "[{}] Failed to wait for an output from a child process for {:?} due to {:?}",
+                line!(),
+                command,
+                error
+            );
+            std::ptr::null_mut()
+        }
     })
 }
 
 #[no_mangle]
 pub fn process_command_status(command_ptr: *mut ValueBox<Command>) -> *mut ValueBox<ExitStatus> {
-    command_ptr.with_not_null_return(std::ptr::null_mut(), |command| {
-        command.status().map_or(std::ptr::null_mut(), |status| {
-            ValueBox::new(status).into_raw()
-        })
+    command_ptr.with_not_null_return(std::ptr::null_mut(), |command| match command.status() {
+        Ok(status) => ValueBox::new(status).into_raw(),
+        Err(error) => {
+            error!(
+                "[{}] Failed to wait for an exit status from a child process for {:?} due to {:?}",
+                line!(),
+                command,
+                error
+            );
+            std::ptr::null_mut()
+        }
     })
 }
 
