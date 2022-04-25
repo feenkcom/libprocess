@@ -1,5 +1,5 @@
 use boxer::string::BoxerString;
-use boxer::{ValueBox, ValueBoxPointer, ValueBoxPointerReference};
+use boxer::{ReturnBoxerResult, ValueBox, ValueBoxPointer, ValueBoxPointerReference};
 use std::path::Path;
 use std::process::{Child, Command, ExitStatus, Output, Stdio};
 
@@ -74,45 +74,30 @@ pub fn process_command_current_dir(
 }
 
 #[no_mangle]
-pub fn process_command_pipe_stdout(command_ptr: *mut ValueBox<Command>) {
-    command_ptr.with_not_null(|command| {
-        command.stdout(Stdio::piped());
-    })
+pub fn process_command_set_stdout(command: *mut ValueBox<Command>, stdio: *mut ValueBox<Stdio>) {
+    command.to_ref().and_then(|mut command| {
+        stdio.to_value().map(|stdio| {
+            command.stdout(stdio);
+        })
+    }).log();
 }
 
 #[no_mangle]
-pub fn process_command_pipe_stderr(command_ptr: *mut ValueBox<Command>) {
-    command_ptr.with_not_null(|command| {
-        command.stderr(Stdio::piped());
-    })
+pub fn process_command_set_stderr(command: *mut ValueBox<Command>, stdio: *mut ValueBox<Stdio>) {
+    command.to_ref().and_then(|mut command| {
+        stdio.to_value().map(|stdio| {
+            command.stderr(stdio);
+        })
+    }).log();
 }
 
 #[no_mangle]
-pub fn process_command_pipe_stdin(command_ptr: *mut ValueBox<Command>) {
-    command_ptr.with_not_null(|command| {
-        command.stdin(Stdio::piped());
-    })
-}
-
-#[no_mangle]
-pub fn process_command_inherit_stdout(command_ptr: *mut ValueBox<Command>) {
-    command_ptr.with_not_null(|command| {
-        command.stdout(Stdio::inherit());
-    })
-}
-
-#[no_mangle]
-pub fn process_command_inherit_stderr(command_ptr: *mut ValueBox<Command>) {
-    command_ptr.with_not_null(|command| {
-        command.stderr(Stdio::inherit());
-    })
-}
-
-#[no_mangle]
-pub fn process_command_inherit_stdin(command_ptr: *mut ValueBox<Command>) {
-    command_ptr.with_not_null(|command| {
-        command.stdin(Stdio::inherit());
-    })
+pub fn process_command_set_stdin(command: *mut ValueBox<Command>, stdio: *mut ValueBox<Stdio>) {
+    command.to_ref().and_then(|mut command| {
+        stdio.to_value().map(|stdio| {
+            command.stdin(stdio);
+        })
+    }).log();
 }
 
 #[no_mangle]
