@@ -9,7 +9,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 libc = "0.2"
-boxer = { git = "https://github.com/feenkcom/gtoolkit-boxer", rev = "d0e1b3163b9d718d996d471edd8af509b9b4518d" }
+boxer = { git = "https://github.com/feenkcom/gtoolkit-boxer", rev = "a984051e5ed49d080105b862969111999c18a880" }
 log = "0.4"
 env_logger = "0.7"
 encoding_rs = "0.8"
