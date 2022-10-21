@@ -1,10 +1,11 @@
-use boxer::array::BoxerArrayU8;
-use boxer::string::BoxerString;
-use boxer::{ValueBox, ValueBoxPointer, ValueBoxPointerReference};
-use encoding_rs::{CoderResult, UTF_8};
+use array_box::ArrayBox;
 use std::io::Read;
 use std::sync::{Arc, Mutex};
 use std::thread;
+
+use encoding_rs::{CoderResult, UTF_8};
+use string_box::StringBox;
+use value_box::{ReturnBoxerResult, ValueBox, ValueBoxPointer};
 
 pub struct AsynchronousBuffer {
     buffer: Arc<Mutex<Vec<u8>>>,
@@ -80,23 +81,25 @@ impl AsynchronousBuffer {
 
 #[no_mangle]
 pub fn process_async_buffer_poll(
-    buffer_ptr: *mut ValueBox<AsynchronousBuffer>,
-) -> *mut ValueBox<BoxerArrayU8> {
-    buffer_ptr.with_not_null_return(std::ptr::null_mut(), |buffer| {
-        ValueBox::new(BoxerArrayU8::from_vector(buffer.poll())).into_raw()
-    })
+    buffer: *mut ValueBox<AsynchronousBuffer>,
+) -> *mut ValueBox<ArrayBox<u8>> {
+    buffer
+        .to_ref()
+        .map(|mut buffer| ArrayBox::from_vector(buffer.poll()))
+        .into_raw()
 }
 
 #[no_mangle]
 pub fn process_async_buffer_poll_string(
-    buffer_ptr: *mut ValueBox<AsynchronousBuffer>,
-) -> *mut ValueBox<BoxerString> {
-    buffer_ptr.with_not_null_return(std::ptr::null_mut(), |buffer| {
-        ValueBox::new(BoxerString::from_string(buffer.poll_string())).into_raw()
-    })
+    buffer: *mut ValueBox<AsynchronousBuffer>,
+) -> *mut ValueBox<StringBox> {
+    buffer
+        .to_ref()
+        .map(|mut buffer| StringBox::from_string(buffer.poll_string()))
+        .into_raw()
 }
 
 #[no_mangle]
-pub fn process_async_buffer_drop(ptr: &mut *mut ValueBox<AsynchronousBuffer>) {
-    ptr.drop();
+pub fn process_async_buffer_drop(buffer: *mut ValueBox<AsynchronousBuffer>) {
+    buffer.release();
 }

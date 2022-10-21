@@ -1,8 +1,8 @@
-use boxer::string::BoxerString;
-use boxer::{ReturnBoxerResult, ValueBox, ValueBoxPointer, ValueBoxPointerReference};
 use std::fs::OpenOptions;
 use std::io::ErrorKind;
 use std::process::Stdio;
+use string_box::StringBox;
+use value_box::{ReturnBoxerResult, ValueBox, ValueBoxPointer};
 
 #[no_mangle]
 pub fn process_stdio_null() -> *mut ValueBox<Stdio> {
@@ -21,7 +21,7 @@ pub fn process_stdio_piped() -> *mut ValueBox<Stdio> {
 
 #[no_mangle]
 pub fn process_stdio_file(
-    path: *mut ValueBox<BoxerString>,
+    path: *mut ValueBox<StringBox>,
     create: bool,
     append: bool,
     truncate: bool,
@@ -55,6 +55,6 @@ pub fn process_stdio_file(
 }
 
 #[no_mangle]
-pub fn process_stdio_drop(stdio: &mut *mut ValueBox<Stdio>) {
-    stdio.drop();
+pub fn process_stdio_drop(stdio: *mut ValueBox<Stdio>) {
+    stdio.release();
 }

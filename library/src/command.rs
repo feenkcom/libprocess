@@ -1,24 +1,24 @@
-use boxer::string::BoxerString;
-use boxer::{ReturnBoxerResult, ValueBox, ValueBoxPointer, ValueBoxPointerReference};
 use std::path::Path;
 use std::process::{Child, Command, ExitStatus, Output, Stdio};
+use string_box::StringBox;
+use value_box::{ReturnBoxerResult, ValueBox, ValueBoxPointer};
 
 #[no_mangle]
-pub fn process_command_new(name_ptr: *mut ValueBox<BoxerString>) -> *mut ValueBox<Command> {
+pub fn process_command_new(name_ptr: *mut ValueBox<StringBox>) -> *mut ValueBox<Command> {
     name_ptr.with_not_null_return(std::ptr::null_mut(), |name| {
         ValueBox::new(Command::new(name.as_str())).into_raw()
     })
 }
 
 #[no_mangle]
-pub fn process_command_drop(ptr: &mut *mut ValueBox<Command>) {
-    ptr.drop();
+pub fn process_command_drop(ptr: *mut ValueBox<Command>) {
+    ptr.release();
 }
 
 #[no_mangle]
 pub fn process_command_arg(
     command_ptr: *mut ValueBox<Command>,
-    arg_ptr: *mut ValueBox<BoxerString>,
+    arg_ptr: *mut ValueBox<StringBox>,
 ) {
     command_ptr.with_not_null(|command| {
         arg_ptr.with_not_null(|arg| {
@@ -30,8 +30,8 @@ pub fn process_command_arg(
 #[no_mangle]
 pub fn process_command_env(
     command_ptr: *mut ValueBox<Command>,
-    key_ptr: *mut ValueBox<BoxerString>,
-    value_ptr: *mut ValueBox<BoxerString>,
+    key_ptr: *mut ValueBox<StringBox>,
+    value_ptr: *mut ValueBox<StringBox>,
 ) {
     command_ptr.with_not_null(|command| {
         key_ptr.with_not_null(|key| {
@@ -45,7 +45,7 @@ pub fn process_command_env(
 #[no_mangle]
 pub fn process_command_env_remove(
     command_ptr: *mut ValueBox<Command>,
-    key_ptr: *mut ValueBox<BoxerString>,
+    key_ptr: *mut ValueBox<StringBox>,
 ) {
     command_ptr.with_not_null(|command| {
         key_ptr.with_not_null(|key| {
@@ -64,7 +64,7 @@ pub fn process_command_env_clear(command_ptr: *mut ValueBox<Command>) {
 #[no_mangle]
 pub fn process_command_current_dir(
     command_ptr: *mut ValueBox<Command>,
-    dir_prt: *mut ValueBox<BoxerString>,
+    dir_prt: *mut ValueBox<StringBox>,
 ) {
     command_ptr.with_not_null(|command| {
         dir_prt.with_not_null(|dir| {
@@ -75,29 +75,38 @@ pub fn process_command_current_dir(
 
 #[no_mangle]
 pub fn process_command_set_stdout(command: *mut ValueBox<Command>, stdio: *mut ValueBox<Stdio>) {
-    command.to_ref().and_then(|mut command| {
-        stdio.to_value().map(|stdio| {
-            command.stdout(stdio);
+    command
+        .to_ref()
+        .and_then(|mut command| {
+            stdio.to_value().map(|stdio| {
+                command.stdout(stdio);
+            })
         })
-    }).log();
+        .log();
 }
 
 #[no_mangle]
 pub fn process_command_set_stderr(command: *mut ValueBox<Command>, stdio: *mut ValueBox<Stdio>) {
-    command.to_ref().and_then(|mut command| {
-        stdio.to_value().map(|stdio| {
-            command.stderr(stdio);
+    command
+        .to_ref()
+        .and_then(|mut command| {
+            stdio.take_value().map(|stdio| {
+                command.stderr(stdio);
+            })
         })
-    }).log();
+        .log();
 }
 
 #[no_mangle]
 pub fn process_command_set_stdin(command: *mut ValueBox<Command>, stdio: *mut ValueBox<Stdio>) {
-    command.to_ref().and_then(|mut command| {
-        stdio.to_value().map(|stdio| {
-            command.stdin(stdio);
+    command
+        .to_ref()
+        .and_then(|mut command| {
+            stdio.take_value().map(|stdio| {
+                command.stdin(stdio);
+            })
         })
-    }).log();
+        .log();
 }
 
 #[no_mangle]

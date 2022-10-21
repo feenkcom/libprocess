@@ -1,5 +1,5 @@
-use boxer::{ValueBox, ValueBoxPointer, ValueBoxPointerReference};
 use std::process::ExitStatus;
+use value_box::{ValueBox, ValueBoxPointer};
 
 #[no_mangle]
 pub fn process_exit_status_success(exit_status_ptr: *mut ValueBox<ExitStatus>) -> bool {
@@ -17,6 +17,6 @@ pub fn process_exit_status_code(exit_status_ptr: *mut ValueBox<ExitStatus>) -> i
 }
 
 #[no_mangle]
-pub fn process_exit_status_drop(ptr: &mut *mut ValueBox<ExitStatus>) {
-    ptr.drop();
+pub fn process_exit_status_drop(ptr: *mut ValueBox<ExitStatus>) {
+    ptr.release();
 }
