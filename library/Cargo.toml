@@ -8,7 +8,7 @@ name = "Process"
 crate-type = ["cdylib"]
 
 [dependencies]
-value-box = "1.0"
+value-box = "1.1"
 string-box = "1.1"
 array-box = "1.0"
 libc = "0.2"
