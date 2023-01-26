@@ -84,8 +84,7 @@ pub fn process_async_buffer_poll(
     buffer: *mut ValueBox<AsynchronousBuffer>,
 ) -> *mut ValueBox<ArrayBox<u8>> {
     buffer
-        .to_ref()
-        .map(|mut buffer| ArrayBox::from_vector(buffer.poll()))
+        .with_mut_ok(|buffer| ArrayBox::from_vector(buffer.poll()))
         .into_raw()
 }
 
@@ -94,8 +93,7 @@ pub fn process_async_buffer_poll_string(
     buffer: *mut ValueBox<AsynchronousBuffer>,
 ) -> *mut ValueBox<StringBox> {
     buffer
-        .to_ref()
-        .map(|mut buffer| StringBox::from_string(buffer.poll_string()))
+        .with_mut_ok(|buffer| StringBox::from_string(buffer.poll_string()))
         .into_raw()
 }
 

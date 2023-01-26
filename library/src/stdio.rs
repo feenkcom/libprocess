@@ -26,32 +26,31 @@ pub fn process_stdio_file(
     append: bool,
     truncate: bool,
 ) -> *mut ValueBox<Stdio> {
-    path.to_ref()
-        .and_then(|path| {
-            let mut options = OpenOptions::new();
-            options
-                .read(true)
-                .write(true)
-                .create(create)
-                .append(append)
-                .truncate(if append { false } else { truncate });
-            options
-                .open(path.as_str())
-                .map_err(|error| {
-                    std::io::Error::new(
-                        ErrorKind::Other,
-                        format!(
-                            "Failed to open file {} with options {:?} due to {}",
-                            path.as_str(),
-                            &options,
-                            error
-                        ),
-                    )
-                    .into()
-                })
-                .map(|file| file.into())
-        })
-        .into_raw()
+    path.with_ref(|path| {
+        let mut options = OpenOptions::new();
+        options
+            .read(true)
+            .write(true)
+            .create(create)
+            .append(append)
+            .truncate(if append { false } else { truncate });
+        options
+            .open(path.as_str())
+            .map_err(|error| {
+                std::io::Error::new(
+                    ErrorKind::Other,
+                    format!(
+                        "Failed to open file {} with options {:?} due to {}",
+                        path.as_str(),
+                        &options,
+                        error
+                    ),
+                )
+                .into()
+            })
+            .map(|file| file.into())
+    })
+    .into_raw()
 }
 
 #[no_mangle]

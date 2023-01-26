@@ -1,3 +1,5 @@
+#![allow(non_snake_case)]
+
 #[macro_use]
 extern crate log;
 
@@ -7,6 +9,8 @@ pub mod command;
 pub mod exit_status;
 pub mod output;
 pub mod stdio;
+
+pub use value_box_ffi::*;
 
 #[no_mangle]
 pub fn process_test() -> bool {
