@@ -25,8 +25,10 @@ pipeline {
         WINDOWS_ARM64_SERVER_NAME = 'bugs-bunny'
         WINDOWS_ARM64_TARGET = 'aarch64-pc-windows-msvc'
 
-        LINUX_SERVER_NAME = 'mickey-mouse'
+        LINUX_AMD64_SERVER_NAME = 'mickey-mouse'
         LINUX_AMD64_TARGET = 'x86_64-unknown-linux-gnu'
+        LINUX_ARM64_SERVER_NAME = 'peter-pan'
+        LINUX_ARM64_TARGET = 'aarch64-unknown-linux-gnu'
     }
 
     stages {
@@ -57,10 +59,9 @@ pipeline {
                     }
 
                     steps {
-                        sh 'git clean -fdx'
                         sh "cargo run --package ${REPOSITORY_NAME}-builder --bin builder --release"
 
-                        sh "mv target/${TARGET}/release/lib${LIBRARY_NAME}.${EXTENSION} lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
+                        sh "mv -f target/${TARGET}/release/lib${LIBRARY_NAME}.${EXTENSION} lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
 
                         stash includes: "lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}", name: "${TARGET}"
                     }
@@ -77,10 +78,9 @@ pipeline {
                     }
 
                     steps {
-                        sh 'git clean -fdx'
                         sh "cargo run --package ${REPOSITORY_NAME}-builder --bin builder --release"
 
-                        sh "mv target/${TARGET}/release/lib${LIBRARY_NAME}.${EXTENSION} lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
+                        sh "mv -f target/${TARGET}/release/lib${LIBRARY_NAME}.${EXTENSION} lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
 
                         stash includes: "lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}", name: "${TARGET}"
                     }
@@ -88,7 +88,7 @@ pipeline {
 
                 stage ('Linux x86_64') {
                     agent {
-                        label "${LINUX_AMD64_TARGET}-${LINUX_SERVER_NAME}"
+                        label "${LINUX_AMD64_TARGET}-${LINUX_AMD64_SERVER_NAME}"
                     }
                     environment {
                         TARGET = "${LINUX_AMD64_TARGET}"
@@ -97,10 +97,28 @@ pipeline {
                     }
 
                     steps {
-                        sh 'git clean -fdx'
                         sh "cargo run --package ${REPOSITORY_NAME}-builder --bin builder --release"
 
-                        sh "mv target/${TARGET}/release/lib${LIBRARY_NAME}.${EXTENSION} lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
+                        sh "mv -f target/${TARGET}/release/lib${LIBRARY_NAME}.${EXTENSION} lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
+
+                        stash includes: "lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}", name: "${TARGET}"
+                    }
+                }
+
+                stage ('Linux arm64') {
+                    agent {
+                        label "${LINUX_ARM64_TARGET}-${LINUX_ARM64_SERVER_NAME}"
+                    }
+                    environment {
+                        TARGET = "${LINUX_ARM64_TARGET}"
+                        EXTENSION = "so"
+                        PATH = "$HOME/.cargo/bin:$PATH"
+                    }
+
+                    steps {
+                        sh "cargo run --package ${REPOSITORY_NAME}-builder --bin builder --release"
+
+                        sh "mv -f target/${TARGET}/release/lib${LIBRARY_NAME}.${EXTENSION} lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
 
                         stash includes: "lib${LIBRARY_NAME}-${TARGET}.${EXTENSION}", name: "${TARGET}"
                     }
@@ -120,10 +138,8 @@ pipeline {
                     }
 
                     steps {
-                        powershell 'git clean -fdx'
-
                         powershell "cargo run --package ${REPOSITORY_NAME}-builder --bin builder --release -- --target ${TARGET}"
-                        powershell "Move-Item -Path target/${TARGET}/release/${LIBRARY_NAME}.${EXTENSION} -Destination ${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
+                        powershell "Move-Item -Force -Path target/${TARGET}/release/${LIBRARY_NAME}.${EXTENSION} -Destination ${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
                         stash includes: "${LIBRARY_NAME}-${TARGET}.${EXTENSION}", name: "${TARGET}"
                     }
                 }
@@ -142,10 +158,8 @@ pipeline {
                     }
 
                     steps {
-                        powershell 'git clean -fdx'
-
                         powershell "cargo run --package ${REPOSITORY_NAME}-builder --bin builder --release -- --target ${TARGET}"
-                        powershell "Move-Item -Path target/${TARGET}/release/${LIBRARY_NAME}.${EXTENSION} -Destination ${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
+                        powershell "Move-Item -Force -Path target/${TARGET}/release/${LIBRARY_NAME}.${EXTENSION} -Destination ${LIBRARY_NAME}-${TARGET}.${EXTENSION}"
                         stash includes: "${LIBRARY_NAME}-${TARGET}.${EXTENSION}", name: "${TARGET}"
                     }
                 }
@@ -165,6 +179,7 @@ pipeline {
             }
             steps {
                 unstash "${LINUX_AMD64_TARGET}"
+                unstash "${LINUX_ARM64_TARGET}"
                 unstash "${MACOS_INTEL_TARGET}"
                 unstash "${MACOS_M1_TARGET}"
                 unstash "${WINDOWS_AMD64_TARGET}"
@@ -178,10 +193,12 @@ pipeline {
                     --owner ${REPOSITORY_OWNER} \
                     --repo ${REPOSITORY_NAME} \
                     --token GITHUB_TOKEN \
+                    release \
                     --bump ${params.BUMP} \
                     --auto-accept \
                     --assets \
                         lib${LIBRARY_NAME}-${LINUX_AMD64_TARGET}.so \
+                        lib${LIBRARY_NAME}-${LINUX_ARM64_TARGET}.so \
                         lib${LIBRARY_NAME}-${MACOS_INTEL_TARGET}.dylib \
                         lib${LIBRARY_NAME}-${MACOS_M1_TARGET}.dylib \
                         ${LIBRARY_NAME}-${WINDOWS_AMD64_TARGET}.dll \
