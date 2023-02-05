@@ -1,5 +1,5 @@
 use crate::async_buffer::AsynchronousBuffer;
-use std::process::{Child, ExitStatus, Output};
+use std::process::{Child, ChildStdout, ExitStatus, Output};
 use value_box::{BoxerError, ReturnBoxerResult, ValueBox, ValueBoxPointer};
 
 #[no_mangle]
@@ -74,6 +74,20 @@ pub fn process_child_take_asynchronous_stdout(
                 .ok_or_else(|| BoxerError::AnyError("There is no stdout in Child".into()))
         })
         .map(|stdout| AsynchronousBuffer::new(stdout))
+        .into_raw()
+}
+
+#[no_mangle]
+pub fn process_child_take_stdout(
+    child: *mut ValueBox<Child>,
+) -> *mut ValueBox<ChildStdout> {
+    child
+        .with_mut(|child| {
+            child
+                .stdout
+                .take()
+                .ok_or_else(|| BoxerError::AnyError("There is no stdout in Child".into()))
+        })
         .into_raw()
 }
 

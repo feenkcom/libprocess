@@ -1,6 +1,6 @@
 use std::fs::OpenOptions;
 use std::io::ErrorKind;
-use std::process::Stdio;
+use std::process::{ChildStdout, Stdio};
 use string_box::StringBox;
 use value_box::{ReturnBoxerResult, ValueBox, ValueBoxPointer};
 
@@ -51,6 +51,11 @@ pub fn process_stdio_file(
             .map(|file| file.into())
     })
     .into_raw()
+}
+
+#[no_mangle]
+pub fn process_stdio_from_child_stdout(stdout: *mut ValueBox<ChildStdout>) -> *mut ValueBox<Stdio> {
+    stdout.take_value().map(|stdout| stdout.into()).into_raw()
 }
 
 #[no_mangle]
