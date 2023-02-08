@@ -1,11 +1,11 @@
-use array_box::ArrayBox;
 use std::io::Read;
 use std::sync::{Arc, Mutex};
 use std::thread;
 
+use array_box::ArrayBox;
 use encoding_rs::{CoderResult, UTF_8};
 use string_box::StringBox;
-use value_box::{ReturnBoxerResult, ValueBox, ValueBoxPointer};
+use value_box::{ValueBox, ValueBoxIntoRaw, ValueBoxPointer};
 
 pub struct AsynchronousBuffer {
     buffer: Arc<Mutex<Vec<u8>>>,
@@ -84,7 +84,7 @@ pub fn process_async_buffer_poll(
     buffer: *mut ValueBox<AsynchronousBuffer>,
 ) -> *mut ValueBox<ArrayBox<u8>> {
     buffer
-        .with_mut_ok(|buffer| ArrayBox::from_vector(buffer.poll()))
+        .with_mut_ok(|buffer| ValueBox::new(ArrayBox::from_vector(buffer.poll())))
         .into_raw()
 }
 
@@ -93,7 +93,7 @@ pub fn process_async_buffer_poll_string(
     buffer: *mut ValueBox<AsynchronousBuffer>,
 ) -> *mut ValueBox<StringBox> {
     buffer
-        .with_mut_ok(|buffer| StringBox::from_string(buffer.poll_string()))
+        .with_mut_ok(|buffer| ValueBox::new(StringBox::from_string(buffer.poll_string())))
         .into_raw()
 }
 

@@ -2,6 +2,10 @@
 
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate value_box;
+#[macro_use]
+extern crate phlow;
 
 pub mod async_buffer;
 pub mod child;
@@ -10,7 +14,11 @@ pub mod exit_status;
 pub mod output;
 pub mod stdio;
 
+pub use phlow_extensions::CoreExtensions;
+pub use phlow_ffi::*;
 pub use value_box_ffi::*;
+
+import_extensions!(CoreExtensions);
 
 #[no_mangle]
 pub fn process_test() -> bool {

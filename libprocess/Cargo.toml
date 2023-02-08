@@ -1,0 +1,21 @@
+[package]
+name = "libprocess"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "Process"
+crate-type = ["cdylib"]
+
+[dependencies]
+libc = "0.2"
+log = "0.4"
+env_logger = "0.10"
+encoding_rs = "0.8"
+value-box = { version = "2.3", features = [ "phlow" ] }
+string-box = "1.1"
+array-box = "1.0"
+value-box-ffi = { version = "1.1", features = [ "array-box", "string-box", "phlow"] }
+phlow = { version = "1.3", features = [ "phlow-derive" ] }
+phlow-extensions = "1.3"
+phlow-ffi = "1.1"

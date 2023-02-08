@@ -1,22 +1,24 @@
 use std::fs::OpenOptions;
 use std::io::ErrorKind;
-use std::process::{ChildStdout, Stdio};
+use std::io::Write;
+use std::process::{ChildStdin, ChildStdout, Stdio};
+
 use string_box::StringBox;
-use value_box::{ReturnBoxerResult, ValueBox, ValueBoxPointer};
+use value_box::{ReturnBoxerResult, ValueBox, ValueBoxIntoRaw, ValueBoxPointer};
 
 #[no_mangle]
 pub fn process_stdio_null() -> *mut ValueBox<Stdio> {
-    ValueBox::new(Stdio::null()).into_raw()
+    value_box!(Stdio::null()).into_raw()
 }
 
 #[no_mangle]
 pub fn process_stdio_inherit() -> *mut ValueBox<Stdio> {
-    ValueBox::new(Stdio::inherit()).into_raw()
+    value_box!(Stdio::inherit()).into_raw()
 }
 
 #[no_mangle]
 pub fn process_stdio_piped() -> *mut ValueBox<Stdio> {
-    ValueBox::new(Stdio::piped()).into_raw()
+    value_box!(Stdio::piped()).into_raw()
 }
 
 #[no_mangle]
@@ -50,12 +52,35 @@ pub fn process_stdio_file(
             })
             .map(|file| file.into())
     })
+    .map(|stdio| value_box!(stdio))
     .into_raw()
 }
 
 #[no_mangle]
 pub fn process_stdio_from_child_stdout(stdout: *mut ValueBox<ChildStdout>) -> *mut ValueBox<Stdio> {
-    stdout.take_value().map(|stdout| stdout.into()).into_raw()
+    stdout
+        .take_value()
+        .map(|stdout| value_box!(stdout.into()))
+        .into_raw()
+}
+
+#[no_mangle]
+pub fn process_child_stdin_write_string(
+    stdin: *mut ValueBox<ChildStdin>,
+    string: *mut ValueBox<StringBox>,
+) {
+    stdin
+        .with_mut(|stdin| {
+            string.with_ref(|string| {
+                write!(stdin, "{}", string.as_str()).map_err(|error| error.into())
+            })
+        })
+        .log();
+}
+
+#[no_mangle]
+pub fn process_child_stdin_close(stdin: *mut ValueBox<ChildStdin>) {
+    stdin.take_value().log();
 }
 
 #[no_mangle]

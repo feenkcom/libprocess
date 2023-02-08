@@ -1,6 +1,6 @@
 use crate::async_buffer::AsynchronousBuffer;
-use std::process::{Child, ChildStdout, ExitStatus, Output};
-use value_box::{BoxerError, ReturnBoxerResult, ValueBox, ValueBoxPointer};
+use std::process::{Child, ChildStdin, ChildStdout, ExitStatus, Output};
+use value_box::{BoxerError, ReturnBoxerResult, ValueBox, ValueBoxIntoRaw, ValueBoxPointer};
 
 #[no_mangle]
 pub fn process_child_kill(child: *mut ValueBox<Child>) -> bool {
@@ -74,13 +74,12 @@ pub fn process_child_take_asynchronous_stdout(
                 .ok_or_else(|| BoxerError::AnyError("There is no stdout in Child".into()))
         })
         .map(|stdout| AsynchronousBuffer::new(stdout))
+        .map(|stdout| value_box!(stdout))
         .into_raw()
 }
 
 #[no_mangle]
-pub fn process_child_take_stdout(
-    child: *mut ValueBox<Child>,
-) -> *mut ValueBox<ChildStdout> {
+pub fn process_child_take_stdout(child: *mut ValueBox<Child>) -> *mut ValueBox<ChildStdout> {
     child
         .with_mut(|child| {
             child
@@ -88,6 +87,20 @@ pub fn process_child_take_stdout(
                 .take()
                 .ok_or_else(|| BoxerError::AnyError("There is no stdout in Child".into()))
         })
+        .map(|stdout| value_box!(stdout))
+        .into_raw()
+}
+
+#[no_mangle]
+pub fn process_child_take_stdin(child: *mut ValueBox<Child>) -> *mut ValueBox<ChildStdin> {
+    child
+        .with_mut(|child| {
+            child
+                .stdin
+                .take()
+                .ok_or_else(|| BoxerError::AnyError("There is no stdin in Child".into()))
+        })
+        .map(|stdin| value_box!(stdin))
         .into_raw()
 }
 
@@ -102,7 +115,8 @@ pub fn process_child_take_asynchronous_stderr(
                 .take()
                 .ok_or_else(|| BoxerError::AnyError("There is no stderr in Child".into()))
         })
-        .map(|stdout| AsynchronousBuffer::new(stdout))
+        .map(|stderr| AsynchronousBuffer::new(stderr))
+        .map(|stderr| value_box!(stderr))
         .into_raw()
 }
 
@@ -110,6 +124,7 @@ pub fn process_child_take_asynchronous_stderr(
 pub fn process_child_wait(child: *mut ValueBox<Child>) -> *mut ValueBox<ExitStatus> {
     child
         .with_mut(|child| child.wait().map_err(|error| error.into()))
+        .map(|status| value_box!(status))
         .into_raw()
 }
 
@@ -119,7 +134,7 @@ pub fn process_child_try_wait(child: *mut ValueBox<Child>) -> *mut ValueBox<Exit
         .with_mut(|child| child.try_wait().map_err(|error| error.into()))
         .map(|exit_status| {
             exit_status
-                .map(|exit_status| ValueBox::new(exit_status).into_raw())
+                .map(|exit_status| value_box!(exit_status).into_raw())
                 .unwrap_or(std::ptr::null_mut())
         })
         .or_log(std::ptr::null_mut())
@@ -131,6 +146,7 @@ pub fn process_child_wait_with_output(child: *mut ValueBox<Child>) -> *mut Value
     child
         .take_value()
         .and_then(|child| child.wait_with_output().map_err(|error| error.into()))
+        .map(|output| value_box!(output))
         .into_raw()
 }
 

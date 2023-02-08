@@ -1,12 +1,12 @@
 use std::path::Path;
 use std::process::{Child, Command, ExitStatus, Output, Stdio};
 use string_box::StringBox;
-use value_box::{ReturnBoxerResult, ValueBox, ValueBoxPointer};
+use value_box::{ReturnBoxerResult, ValueBox, ValueBoxIntoRaw, ValueBoxPointer};
 
 #[no_mangle]
 pub fn process_command_new(program: *mut ValueBox<StringBox>) -> *mut ValueBox<Command> {
     program
-        .with_ref_ok(|name| Command::new(name.as_str()))
+        .with_ref_ok(|name| value_box!(Command::new(name.as_str())))
         .into_raw()
 }
 
@@ -114,6 +114,7 @@ pub fn process_command_set_stdin(command: *mut ValueBox<Command>, stdio: *mut Va
 pub fn process_command_spawn(command: *mut ValueBox<Command>) -> *mut ValueBox<Child> {
     command
         .with_mut(|command| command.spawn().map_err(|error| error.into()))
+        .map(|child| value_box!(child))
         .into_raw()
 }
 
@@ -121,6 +122,7 @@ pub fn process_command_spawn(command: *mut ValueBox<Command>) -> *mut ValueBox<C
 pub fn process_command_output(command: *mut ValueBox<Command>) -> *mut ValueBox<Output> {
     command
         .with_mut(|command| command.output().map_err(|error| error.into()))
+        .map(|output| value_box!(output))
         .into_raw()
 }
 
@@ -128,6 +130,7 @@ pub fn process_command_output(command: *mut ValueBox<Command>) -> *mut ValueBox<
 pub fn process_command_status(command: *mut ValueBox<Command>) -> *mut ValueBox<ExitStatus> {
     command
         .with_mut(|command| command.status().map_err(|error| error.into()))
+        .map(|status| value_box!(status))
         .into_raw()
 }
 
