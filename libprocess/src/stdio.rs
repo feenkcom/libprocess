@@ -84,6 +84,11 @@ pub fn process_child_stdin_close(stdin: *mut ValueBox<ChildStdin>) {
 }
 
 #[no_mangle]
+pub fn process_child_stdin_drop(stdin: *mut ValueBox<ChildStdin>) {
+    stdin.release();
+}
+
+#[no_mangle]
 pub fn process_stdio_drop(stdio: *mut ValueBox<Stdio>) {
     stdio.release();
 }
