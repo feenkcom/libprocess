@@ -1,4 +1,5 @@
 use crate::async_buffer::AsynchronousBuffer;
+use crate::{AsyncOutput, SemaphoreSignaller};
 use std::process::{Child, ChildStdin, ChildStdout, ExitStatus, Output};
 use value_box::{BoxerError, ReturnBoxerResult, ValueBox, ValueBoxIntoRaw, ValueBoxPointer};
 
@@ -73,7 +74,30 @@ pub fn process_child_take_asynchronous_stdout(
                 .take()
                 .ok_or_else(|| BoxerError::AnyError("There is no stdout in Child".into()))
         })
-        .map(|stdout| AsynchronousBuffer::new(stdout))
+        .map(|stdout| AsynchronousBuffer::new(stdout, None))
+        .map(|stdout| value_box!(stdout))
+        .into_raw()
+}
+
+#[no_mangle]
+pub fn process_child_take_asynchronous_stdout_with_semaphore(
+    child: *mut ValueBox<Child>,
+    semaphore_callback: extern "C" fn(usize),
+    semaphore_index: usize,
+) -> *mut ValueBox<AsynchronousBuffer> {
+    child
+        .with_mut(|child| {
+            child
+                .stdout
+                .take()
+                .ok_or_else(|| BoxerError::AnyError("There is no stdout in Child".into()))
+        })
+        .map(|stdout| {
+            AsynchronousBuffer::new(
+                stdout,
+                Some(SemaphoreSignaller::new(semaphore_callback, semaphore_index)),
+            )
+        })
         .map(|stdout| value_box!(stdout))
         .into_raw()
 }
@@ -115,7 +139,30 @@ pub fn process_child_take_asynchronous_stderr(
                 .take()
                 .ok_or_else(|| BoxerError::AnyError("There is no stderr in Child".into()))
         })
-        .map(|stderr| AsynchronousBuffer::new(stderr))
+        .map(|stderr| AsynchronousBuffer::new(stderr, None))
+        .map(|stderr| value_box!(stderr))
+        .into_raw()
+}
+
+#[no_mangle]
+pub fn process_child_take_asynchronous_stderr_with_semaphore(
+    child: *mut ValueBox<Child>,
+    semaphore_callback: extern "C" fn(usize),
+    semaphore_index: usize,
+) -> *mut ValueBox<AsynchronousBuffer> {
+    child
+        .with_mut(|child| {
+            child
+                .stderr
+                .take()
+                .ok_or_else(|| BoxerError::AnyError("There is no stderr in Child".into()))
+        })
+        .map(|stderr| {
+            AsynchronousBuffer::new(
+                stderr,
+                Some(SemaphoreSignaller::new(semaphore_callback, semaphore_index)),
+            )
+        })
         .map(|stderr| value_box!(stderr))
         .into_raw()
 }
@@ -147,6 +194,25 @@ pub fn process_child_wait_with_output(child: *mut ValueBox<Child>) -> *mut Value
         .take_value()
         .and_then(|child| child.wait_with_output().map_err(|error| error.into()))
         .map(|output| value_box!(output))
+        .into_raw()
+}
+
+#[no_mangle]
+pub fn process_child_async_wait_with_output(
+    child: *mut ValueBox<Child>,
+    semaphore_callback: extern "C" fn(usize),
+    semaphore_index: usize,
+) -> *mut ValueBox<AsyncOutput> {
+    child
+        .take_value()
+        .and_then(|child| {
+            AsyncOutput::waiting_for(
+                child,
+                SemaphoreSignaller::new(semaphore_callback, semaphore_index),
+            )
+            .map_err(|error| error.into())
+            .map(|output| value_box!(output))
+        })
         .into_raw()
 }
 

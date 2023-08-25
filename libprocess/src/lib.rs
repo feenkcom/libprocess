@@ -3,20 +3,25 @@
 #[macro_use]
 extern crate log;
 #[macro_use]
-extern crate value_box;
-#[macro_use]
 extern crate phlow;
-
-pub mod async_buffer;
-pub mod child;
-pub mod command;
-pub mod exit_status;
-pub mod output;
-pub mod stdio;
+#[macro_use]
+extern crate value_box;
 
 pub use phlow_extensions::CoreExtensions;
 pub use phlow_ffi::*;
 pub use value_box_ffi::*;
+
+pub use async_output::AsyncOutput;
+pub use semaphore_signaller::SemaphoreSignaller;
+
+pub mod async_buffer;
+pub mod async_output;
+pub mod child;
+pub mod command;
+pub mod exit_status;
+pub mod output;
+pub mod semaphore_signaller;
+pub mod stdio;
 
 import_extensions!(CoreExtensions);
 
