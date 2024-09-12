@@ -16,7 +16,7 @@ pub struct AsynchronousBuffer {
 }
 
 impl AsynchronousBuffer {
-    pub fn new<R>(mut stream: R, semaphore_signaller: Option<SemaphoreSignaller>) -> Self
+    pub fn new<R>(mut stream: R, read_stream_signaller: Option<SemaphoreSignaller>) -> Self
     where
         R: Read + Send + 'static,
     {
@@ -25,34 +25,38 @@ impl AsynchronousBuffer {
         let is_end_of_file = Arc::new(Mutex::new(false));
 
         let is_end_of_file_clone = is_end_of_file.clone();
-        let semaphore_signaller = Arc::new(Mutex::new(semaphore_signaller));
+        let read_stream_signaller = Arc::new(Mutex::new(read_stream_signaller));
 
         thread::Builder::new()
             .name("child_stream_to_vec".into())
-            .spawn(move || loop {
-                let mut buf = [0];
-                match stream.read(&mut buf) {
-                    Err(err) => {
-                        error!("[{}] Error reading from stream: {}", line!(), err);
-                        break;
-                    }
-                    Ok(got) => {
-                        if got == 0 {
-                            break;
-                        } else if got == 1 {
-                            vec.lock().push(buf[0])
-                        } else {
-                            error!("[{}] Unexpected number of bytes: {}", line!(), got);
+            .spawn(move || {
+                loop {
+                    let mut buf = [0; 1028];
+                    match stream.read(&mut buf) {
+                        Err(err) => {
+                            error!("[{}] Error reading from stream: {}", line!(), err);
                             break;
                         }
+                        Ok(got) => {
+                            if got == 0 {
+                                break;
+                            } else if got >= 1 && got <= buf.len() {
+                                vec.lock().extend_from_slice(&buf[0..got]);
+                            } else {
+                                error!("[{}] Unexpected number of bytes: {}", line!(), got);
+                                break;
+                            }
+                        }
+                    }
+                    if let Some(signaller) = read_stream_signaller.lock().as_ref() {
+                        signaller.signal();
                     }
                 }
 
                 let mut is_end_of_file_lock = is_end_of_file_clone.lock();
-                let mut semaphore_signaller_lock = semaphore_signaller.lock();
-
                 *is_end_of_file_lock = true;
-                if let Some(signaller) = semaphore_signaller_lock.take() {
+
+                if let Some(signaller) = read_stream_signaller.lock().as_ref() {
                     signaller.signal();
                 }
             })
@@ -86,6 +90,28 @@ impl AsynchronousBuffer {
         string
     }
 
+    pub fn poll_string_up_to(&mut self, amount: usize) -> String {
+        let mut buffer = self.buffer.lock();
+
+        let mut string = String::with_capacity(amount);
+
+        let mut decoder = UTF_8.new_decoder();
+        let (result, length, _has_replacements) = decoder.decode_to_string(
+            &buffer.as_slice()[0..amount.min(buffer.len())],
+            &mut string,
+            false,
+        );
+
+        buffer.drain(0..length);
+
+        match result {
+            CoderResult::InputEmpty => {}
+            CoderResult::OutputFull => {}
+        }
+
+        string
+    }
+
     pub fn is_end_of_file_reached(&self) -> bool {
         *self.is_end_of_file.lock()
     }
@@ -106,6 +132,16 @@ pub fn process_async_buffer_poll_string(
 ) -> *mut ValueBox<StringBox> {
     buffer
         .with_mut_ok(|buffer| ValueBox::new(StringBox::from_string(buffer.poll_string())))
+        .into_raw()
+}
+
+#[no_mangle]
+pub fn process_async_buffer_poll_string_up_to(
+    buffer: *mut ValueBox<AsynchronousBuffer>,
+    amount: usize
+) -> *mut ValueBox<StringBox> {
+    buffer
+        .with_mut_ok(|buffer| ValueBox::new(StringBox::from_string(buffer.poll_string_up_to(amount))))
         .into_raw()
 }
 
