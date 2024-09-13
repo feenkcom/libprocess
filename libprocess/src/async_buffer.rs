@@ -13,6 +13,7 @@ use crate::SemaphoreSignaller;
 pub struct AsynchronousBuffer {
     buffer: Arc<Mutex<Vec<u8>>>,
     is_end_of_file: Arc<Mutex<bool>>,
+    read_stream_signaller: Arc<Mutex<Option<SemaphoreSignaller>>>,
 }
 
 impl AsynchronousBuffer {
@@ -26,6 +27,7 @@ impl AsynchronousBuffer {
 
         let is_end_of_file_clone = is_end_of_file.clone();
         let read_stream_signaller = Arc::new(Mutex::new(read_stream_signaller));
+        let read_stream_signaller_clone = read_stream_signaller.clone();
 
         thread::Builder::new()
             .name("child_stream_to_vec".into())
@@ -61,9 +63,11 @@ impl AsynchronousBuffer {
                 }
             })
             .expect("!thread");
+
         AsynchronousBuffer {
             buffer,
             is_end_of_file,
+            read_stream_signaller: read_stream_signaller_clone,
         }
     }
 
@@ -115,6 +119,10 @@ impl AsynchronousBuffer {
     pub fn is_end_of_file_reached(&self) -> bool {
         *self.is_end_of_file.lock()
     }
+
+    pub fn release_signaller(&self) {
+        self.read_stream_signaller.lock().take();
+    }
 }
 
 #[no_mangle]
@@ -138,10 +146,12 @@ pub fn process_async_buffer_poll_string(
 #[no_mangle]
 pub fn process_async_buffer_poll_string_up_to(
     buffer: *mut ValueBox<AsynchronousBuffer>,
-    amount: usize
+    amount: usize,
 ) -> *mut ValueBox<StringBox> {
     buffer
-        .with_mut_ok(|buffer| ValueBox::new(StringBox::from_string(buffer.poll_string_up_to(amount))))
+        .with_mut_ok(|buffer| {
+            ValueBox::new(StringBox::from_string(buffer.poll_string_up_to(amount)))
+        })
         .into_raw()
 }
 
@@ -152,6 +162,13 @@ pub fn process_async_buffer_is_end_of_file_reached(
     buffer
         .with_mut_ok(|buffer| buffer.is_end_of_file_reached())
         .or_log(true)
+}
+
+#[no_mangle]
+pub fn process_async_buffer_release_signaller(buffer: *mut ValueBox<AsynchronousBuffer>) {
+    buffer
+        .with_ref_ok(|buffer| buffer.release_signaller())
+        .log();
 }
 
 #[no_mangle]
